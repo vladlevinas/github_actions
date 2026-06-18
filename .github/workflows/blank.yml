@@ -78,7 +78,7 @@ jobs:
 
       - id: upload-artifacts
         name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: ./dist
@@ -113,7 +113,7 @@ jobs:
 
       - id: download-artifacts
         name: Download Build Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts
 
@@ -140,7 +140,7 @@ jobs:
 
       - id: download-artifacts
         name: Download Build Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts
 
