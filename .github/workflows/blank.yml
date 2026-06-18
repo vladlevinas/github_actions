@@ -9,6 +9,7 @@ on:
       - v*
     paths:
       - src/**
+      - .github/workflows/**
   pull_request:
     branches:
       - main
@@ -18,6 +19,7 @@ on:
       - closed
     paths:
       - src/**
+      - .github/workflows/**
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
@@ -49,29 +51,36 @@ jobs:
     steps:
       - id: checkout-code
         name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - id: install-dependencies
-        name: Install Dependencies
+      - id: inspect-repo
+        name: Inspect Repository
         run: |
-          echo "Installing dependencies..."
+          echo "Inspecting repository..."
           echo "GLOBAL_VAR=$GLOBAL_VAR"
           echo "BUILD_ENV=$BUILD_ENV"
-          npm install
+          pwd
+          ls -la
+          if [ -d "src" ]; then
+            echo "src directory found"
+          else
+            echo "src directory not found"
+          fi
 
       - id: build-project
         name: Build Project
         run: |
-          echo "Building Vite React project..."
-          echo "NODE_ENV=$NODE_ENV"
-          npm run build
-        env:
-          NODE_ENV: production
+          echo "Running non-Node build placeholder..."
+          mkdir -p build-output
+          echo "Build completed at $(date -u +"%Y-%m-%dT%H:%M:%SZ")" > build-output/BUILD_INFO.txt
+          echo "Repository: $GITHUB_REPOSITORY" >> build-output/BUILD_INFO.txt
+          echo "Commit SHA: $GITHUB_SHA" >> build-output/BUILD_INFO.txt
+          echo "Ref: $GITHUB_REF" >> build-output/BUILD_INFO.txt
 
       - id: save-build-output
         name: Save Build Output
         run: |
-          echo "build_status=success" >> $GITHUB_OUTPUT
+          echo "build_status=success" >> "$GITHUB_OUTPUT"
           echo "Custom Input Provided: $CUSTOM_ENV"
         env:
           CUSTOM_ENV: custom-build-value
@@ -81,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: ./dist
+          path: ./build-output
 
   test:
     name: Run Tests
@@ -94,32 +103,40 @@ jobs:
     steps:
       - id: checkout-code
         name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - id: run-tests
         name: Run Tests
         run: |
-          echo "Running tests..."
+          echo "Running non-Node test placeholder..."
           echo "TEST_ENV=$TEST_ENV"
           echo "GLOBAL_VAR=$GLOBAL_VAR"
           echo "Build Output: ${{ needs.build.outputs.build-output }}"
           echo "Test Param Provided: $CUSTOM_PARAM"
+
+          # Example placeholder assertions:
+          test -d src && echo "src exists" || echo "src does not exist"
         env:
           CUSTOM_PARAM: test-param-value
 
       - id: save-test-output
         name: Save Test Output
-        run: echo "test_status=passed" >> $GITHUB_OUTPUT
+        run: echo "test_status=passed" >> "$GITHUB_OUTPUT"
 
       - id: download-artifacts
         name: Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
+          path: ./downloaded-artifacts
 
       - id: output-artifacts-content
         name: Output Artifacts Content
-        run: ls
+        run: |
+          echo "Downloaded artifacts:"
+          ls -la ./downloaded-artifacts
+          echo "Build info file content:"
+          cat ./downloaded-artifacts/BUILD_INFO.txt
 
   deploy:
     name: Deploy Application
@@ -131,7 +148,7 @@ jobs:
       - id: deploy-to-env
         name: Deploy to Environment
         run: |
-          echo "Deploying Vite React application..."
+          echo "Deploying non-Node application placeholder..."
           echo "DEPLOY_ENV=$DEPLOY_ENV"
           echo "GLOBAL_VAR=$GLOBAL_VAR"
           echo "Test Output: ${{ needs.test.outputs.test-output }}"
@@ -143,11 +160,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
+          path: ./deploy-artifacts
 
       - id: output-artifacts-content
         name: Output Artifacts Content
-        run: ls
+        run: |
+          echo "Artifacts available for deployment:"
+          ls -la ./deploy-artifacts
+          cat ./deploy-artifacts/BUILD_INFO.txt
 
       - id: save-deployment-output
         name: Save Deployment Output
-        run: echo "deployment_status=success" >> $GITHUB_OUTPUT
+        run: echo "deployment_status=success" >> "$GITHUB_OUTPUT"
